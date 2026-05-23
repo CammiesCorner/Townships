@@ -4,10 +4,16 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class Town {
 	public static final Codec<Town> CODEC = RecordCodecBuilder.create(townInstance -> townInstance.group(
@@ -15,12 +21,13 @@ public class Town {
 			Codec.STRING.fieldOf("name").forGetter(Town::getName),
 			Codec.STRING.fieldOf("display_name").forGetter(Town::getDisplayName),
 			BlockPos.CODEC.fieldOf("home_pos").forGetter(Town::getHomePos),
+			ResourceKey.codec(Registries.DIMENSION).fieldOf("home_dimension").forGetter(Town::getHomeDimension),
 			Codec.INT.fieldOf("gold").forGetter(Town::getGold)
-	).apply(townInstance, (members, name, displayName, blockPos, gold) -> {
+	).apply(townInstance, (members, name, displayName, blockPos, dimension, gold) -> {
 		var town = new Town(members, name, gold);
 
 		town.setDisplayName(displayName);
-		town.setHomePos(blockPos);
+		town.setHome(dimension, blockPos);
 
 		return town;
 	}));
@@ -28,6 +35,7 @@ public class Town {
 	private String name;
 	private String displayName;
 	private BlockPos homePos;
+	private ResourceKey<Level> homeDim;
 	private int gold;
 
 	public Town(Map<UUID, Member> members, String name, int gold) {
@@ -35,6 +43,7 @@ public class Town {
 		this.name = name;
 		this.displayName = name;
 		this.homePos = BlockPos.ZERO;
+		this.homeDim = Level.OVERWORLD;
 		this.gold = gold;
 	}
 
@@ -82,8 +91,13 @@ public class Town {
 		return homePos;
 	}
 
-	public void setHomePos(BlockPos homePos) {
-		this.homePos = homePos;
+	public ResourceKey<Level> getHomeDimension() {
+		return homeDim;
+	}
+
+	public void setHome(ResourceKey<Level> dimension, BlockPos pos) {
+		this.homeDim = dimension;
+		this.homePos = pos;
 	}
 
 	public int getGold() {
