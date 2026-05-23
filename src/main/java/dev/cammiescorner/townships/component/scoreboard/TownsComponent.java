@@ -2,17 +2,20 @@ package dev.cammiescorner.townships.component.scoreboard;
 
 import dev.cammiescorner.townships.Townships;
 import dev.cammiescorner.townships.util.Town;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.scores.Scoreboard;
 import org.ladysnake.cca.api.v8.component.CardinalComponent;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class TownsComponent implements CardinalComponent {
-	private final Map<String, Town> towns = new HashMap<>();
+	private final Map<UUID, Town> towns = new HashMap<>();
 	private final MinecraftServer server;
 
 	public TownsComponent(Scoreboard scoreboard, MinecraftServer server) {
@@ -26,9 +29,9 @@ public class TownsComponent implements CardinalComponent {
 		var townsList = readView.childrenListOrEmpty("Towns");
 
 		for(ValueInput input : townsList) {
-			var townName = input.getString("TownName");
+			var townId = input.read("TownId", UUIDUtil.CODEC);
 
-			townName.ifPresent(name -> input.read("TownData", Town.CODEC).ifPresent(town -> towns.put(name, town)));
+			townId.ifPresent(uuid -> input.read("TownData", Town.CODEC).ifPresent(town -> towns.put(uuid, town)));
 		}
 	}
 
@@ -36,34 +39,33 @@ public class TownsComponent implements CardinalComponent {
 	public void writeData(ValueOutput writeView) {
 		var townsList = writeView.childrenList("Towns");
 
-		towns.forEach((name, town) -> {
+		towns.forEach((uuid, town) -> {
 			var output = townsList.addChild();
 
-			output.putString("TownName", name);
+			output.store("TownId", UUIDUtil.CODEC, uuid);
 			output.store("TownData", Town.CODEC, town);
 		});
 	}
 
-	public Map<String, Town> getTowns() {
-		return Map.copyOf(towns);
+	public Map<UUID, Town> viewTowns() {
+		return Collections.unmodifiableMap(towns);
 	}
 
-	public Town getTown(String name) {
-		if(!towns.containsKey(name)) {
-			Townships.LOGGER.error("Town [{}] doesn't exist", name);
+	public Town getTown(UUID uuid) {
+		if(!towns.containsKey(uuid)) {
+			Townships.LOGGER.error("Town ID [{}] doesn't exist", uuid);
 
 			return null;
 		}
 
-		return towns.get(name);
+		return towns.get(uuid);
 	}
 
-	public void addTown(String name, Town town) {
-		if(!towns.containsKey(name))
-			towns.put(name, town);
+	public void addTown(UUID uuid, Town town) {
+		towns.put(uuid, town);
 	}
 
-	public void removeTown(String name) {
-		towns.remove(name);
+	public void removeTown(UUID uuid) {
+		towns.remove(uuid);
 	}
 }
