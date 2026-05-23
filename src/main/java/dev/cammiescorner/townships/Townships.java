@@ -1,7 +1,9 @@
 package dev.cammiescorner.townships;
 
+import dev.cammiescorner.townships.init.TownshipsCommands;
 import net.fabricmc.api.ModInitializer;
 
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +15,7 @@ public class Townships implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-
+		CommandRegistrationCallback.EVENT.register(TownshipsCommands::init);
 	}
 
 	public static Identifier id(String name) {

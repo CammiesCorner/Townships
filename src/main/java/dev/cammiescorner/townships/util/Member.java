@@ -20,6 +20,10 @@ public class Member {
 		this.rank = rank;
 	}
 
+	public Member(Player player, Rank rank) {
+		this(EntityReference.of(player), rank);
+	}
+
 	public EntityReference<Player> getPlayer() {
 		return player;
 	}
@@ -33,18 +37,24 @@ public class Member {
 	}
 
 	public enum Rank implements StringRepresentable {
-		MAYOR("mayor"), ADMINISTRATOR("administrator"), BANKER("banker"), MEMBER("member");
+		MAYOR("mayor", true), ADMINISTRATOR("administrator", true), BANKER("banker", false), MEMBER("member", false);
 
 		public static final Codec<Rank> CODEC = StringRepresentable.fromEnum(Rank::values);
 		private final String serializedName;
+		private final boolean canClaim;
 
-		Rank(String serializedName) {
+		Rank(String serializedName, boolean canClaim) {
 			this.serializedName = serializedName;
+			this.canClaim = canClaim;
 		}
 
 		@Override
 		public String getSerializedName() {
 			return serializedName;
+		}
+
+		public boolean canClaim() {
+			return canClaim;
 		}
 	}
 }

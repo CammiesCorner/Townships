@@ -22,10 +22,12 @@
 			"dev.cammiescorner.townships.init.TownshipsComponents"
 		]
 	},
-	"cardinal-components": [
-		"townships:towns",
-		"townships:claims"
-	],
+	"custom": {
+		"cardinal-components": [
+			"townships:towns",
+			"townships:claims"
+		]
+	},
 	"mixins": [
 		"townships.mixins.json"
 	],
