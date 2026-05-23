@@ -1,53 +1,68 @@
 package dev.cammiescorner.townships.util;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Town {
-	private final List<EntityReference<Player>> members = new ArrayList<>();
-	private EntityReference<Player> owner;
-	private String displayName;
-	private float gold;
+	public static final Codec<Town> CODEC = RecordCodecBuilder.create(townInstance -> townInstance.group(
+			Codec.unboundedMap(UUIDUtil.STRING_CODEC, Member.CODEC).fieldOf("members").forGetter(Town::getMembers),
+			Codec.STRING.fieldOf("name").forGetter(Town::getName),
+			Codec.STRING.fieldOf("display_name").forGetter(Town::getDisplayName),
+			Codec.INT.fieldOf("gold").forGetter(Town::getGold)
+	).apply(townInstance, (members, name, displayName, gold) -> {
+		var town = new Town(members, name, gold);
 
-	public Town(EntityReference<Player> owner, String displayName, float gold) {
-		this.owner = owner;
-		this.displayName = displayName;
+		town.setDisplayName(displayName);
+
+		return town;
+	}));
+	private final Map<UUID, Member> members = new HashMap<>();
+	private String name;
+	private String displayName;
+	private int gold;
+
+	public Town(Map<UUID, Member> members, String name, int gold) {
+		this.members.putAll(members);
+		this.name = name;
+		this.displayName = name;
 		this.gold = gold;
 	}
 
-	public List<EntityReference<Player>> getMembers() {
-		List<EntityReference<Player>> members = new ArrayList<>();
-
-		members.add(this.owner);
-		members.addAll(this.members);
-
-		return List.copyOf(members);
+	public Map<UUID, Member> getMembers() {
+		return Map.copyOf(members);
 	}
 
-	public void addMember(EntityReference<Player> reference) {
-		if(!members.contains(reference))
-			members.add(reference);
+	public Member getMember(EntityReference<Player> player) {
+		return members.get(player.getUUID());
 	}
 
-	public void addMember(Player player) {
-		addMember(EntityReference.of(player));
+	public void addMember(Member member) {
+		members.put(member.getPlayer().getUUID(), member);
 	}
 
-	public void removeMember(Player player) {
-		members.remove(EntityReference.of(player));
+	public void addMember(EntityReference<Player> player) {
+		addMember(new Member(player, Member.Rank.MEMBER));
 	}
 
-	public EntityReference<Player> getOwner() {
-		return owner;
+	public void removeMember(EntityReference<Player> player) {
+		members.remove(player.getUUID());
 	}
 
-	public void setOwner(EntityReference<Player> owner) {
-		this.owner = owner;
+	public void setMemberRank(EntityReference<Player> player, Member.Rank rank) {
+		members.put(player.getUUID(), new Member(player, rank));
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getDisplayName() {
@@ -58,37 +73,11 @@ public class Town {
 		this.displayName = displayName;
 	}
 
-	public float getGold() {
+	public int getGold() {
 		return gold;
 	}
 
-	public void setGold(float gold) {
+	public void setGold(int gold) {
 		this.gold = gold;
-	}
-
-	public static Town fromData(ValueInput input) {
-		EntityReference<Player> owner = EntityReference.read(input, "OwnerId");
-		var displayName = input.getStringOr("DisplayName", "");
-		var gold = input.getFloatOr("Gold", 0);
-		var memberData = input.childrenListOrEmpty("Members");
-		var town = new Town(owner, displayName, gold);
-
-		for(ValueInput memberDatum : memberData) {
-			town.addMember(EntityReference.read(memberDatum, "MemberId"));
-		}
-
-		return town;
-	}
-
-	public void toData(ValueOutput output) {
-		EntityReference.store(getOwner(), output, "OwnerId");
-		output.putString("DisplayName", getDisplayName());
-		output.putFloat("Gold", getGold());
-
-		var memberData = output.childrenList("Members");
-
-		for(EntityReference<Player> member : members) {
-			EntityReference.store(member, memberData.addChild(), "MemberId");
-		}
 	}
 }

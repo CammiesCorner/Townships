@@ -28,7 +28,7 @@ public class TownsComponent implements CardinalComponent {
 		for(ValueInput input : townsList) {
 			var townName = input.getString("TownName");
 
-			townName.ifPresent(name -> towns.put(name, Town.fromData(input.childOrEmpty("TownData"))));
+			townName.ifPresent(name -> input.read("TownData", Town.CODEC).ifPresent(town -> towns.put(name, town)));
 		}
 	}
 
@@ -40,7 +40,7 @@ public class TownsComponent implements CardinalComponent {
 			var output = townsList.addChild();
 
 			output.putString("TownName", name);
-			town.toData(output.child("TownData"));
+			output.store("TownData", Town.CODEC, town);
 		});
 	}
 
