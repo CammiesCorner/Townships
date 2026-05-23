@@ -2,6 +2,7 @@ package dev.cammiescorner.townships.util;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.player.Player;
@@ -13,23 +14,27 @@ public class Town {
 			Codec.unboundedMap(UUIDUtil.STRING_CODEC, Member.CODEC).fieldOf("members").forGetter(Town::viewMembers),
 			Codec.STRING.fieldOf("name").forGetter(Town::getName),
 			Codec.STRING.fieldOf("display_name").forGetter(Town::getDisplayName),
+			BlockPos.CODEC.fieldOf("home_pos").forGetter(Town::getHomePos),
 			Codec.INT.fieldOf("gold").forGetter(Town::getGold)
-	).apply(townInstance, (members, name, displayName, gold) -> {
+	).apply(townInstance, (members, name, displayName, blockPos, gold) -> {
 		var town = new Town(members, name, gold);
 
 		town.setDisplayName(displayName);
+		town.setHomePos(blockPos);
 
 		return town;
 	}));
 	private final Map<UUID, Member> members = new HashMap<>();
 	private String name;
 	private String displayName;
+	private BlockPos homePos;
 	private int gold;
 
 	public Town(Map<UUID, Member> members, String name, int gold) {
 		this.members.putAll(members);
 		this.name = name;
 		this.displayName = name;
+		this.homePos = BlockPos.ZERO;
 		this.gold = gold;
 	}
 
@@ -71,6 +76,14 @@ public class Town {
 
 	public void setDisplayName(String displayName) {
 		this.displayName = displayName;
+	}
+
+	public BlockPos getHomePos() {
+		return homePos;
+	}
+
+	public void setHomePos(BlockPos homePos) {
+		this.homePos = homePos;
 	}
 
 	public int getGold() {
