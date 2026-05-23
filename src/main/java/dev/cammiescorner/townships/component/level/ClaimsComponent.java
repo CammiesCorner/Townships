@@ -1,18 +1,16 @@
 package dev.cammiescorner.townships.component.level;
 
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.ladysnake.cca.api.v8.component.CardinalComponent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ClaimsComponent implements CardinalComponent {
-	private final Map<String, List<ChunkPos>> townClaims = new HashMap<>();
+	private final Map<UUID, List<ChunkPos>> townClaims = new HashMap<>();
 	private final Level level;
 
 	public ClaimsComponent(Level level) {
@@ -28,13 +26,13 @@ public class ClaimsComponent implements CardinalComponent {
 		for(ValueInput input : claimsList) {
 			List<ChunkPos> list = new ArrayList<>();
 			var posList = input.childrenListOrEmpty("ChunkPoses");
-			var townName = input.getString("TownName");
+			var townId = input.read("TownId", UUIDUtil.CODEC);
 
 			for(ValueInput i : posList) {
 				list.add(new ChunkPos(i.getIntOr("X", 0), i.getIntOr("Z", 0)));
 			}
 
-			townName.ifPresent(s -> townClaims.put(s, list));
+			townId.ifPresent(uuid -> townClaims.put(uuid, list));
 		}
 	}
 
@@ -42,11 +40,11 @@ public class ClaimsComponent implements CardinalComponent {
 	public void writeData(ValueOutput writeView) {
 		var claimsList = writeView.childrenList("TownClaims");
 
-		townClaims.forEach((name, chunkPos) -> {
+		townClaims.forEach((townId, chunkPos) -> {
 			var output = claimsList.addChild();
 			var posList = output.childrenList("ChunkPoses");
 
-			output.putString("TownName", name);
+			output.store("TownId", UUIDUtil.CODEC, townId);
 
 			for(ChunkPos pos : chunkPos) {
 				var o = posList.addChild();
@@ -57,29 +55,29 @@ public class ClaimsComponent implements CardinalComponent {
 		});
 	}
 
-	public List<ChunkPos> getChunks(String name) {
-		return List.copyOf(townClaims.getOrDefault(name, List.of()));
+	public List<ChunkPos> getChunks(UUID uuid) {
+		return List.copyOf(townClaims.getOrDefault(uuid, List.of()));
 	}
 
-	public void addChunk(String name, ChunkPos pos) {
-		if(!townClaims.containsKey(name))
+	public void addChunk(UUID uuid, ChunkPos pos) {
+		if(!townClaims.containsKey(uuid))
 			return;
 
-		var chunks = townClaims.get(name);
+		var chunks = townClaims.get(uuid);
 
 		chunks.add(pos);
 
-		townClaims.replace(name, chunks);
+		townClaims.replace(uuid, chunks);
 	}
 
-	public void removeChunk(String name, ChunkPos pos) {
-		if(!townClaims.containsKey(name))
+	public void removeChunk(UUID uuid, ChunkPos pos) {
+		if(!townClaims.containsKey(uuid))
 			return;
 
-		var chunks = townClaims.get(name);
+		var chunks = townClaims.get(uuid);
 
 		chunks.remove(pos);
 
-		townClaims.replace(name, chunks);
+		townClaims.replace(uuid, chunks);
 	}
 }
