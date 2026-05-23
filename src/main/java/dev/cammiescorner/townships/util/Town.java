@@ -10,7 +10,7 @@ import java.util.*;
 
 public class Town {
 	public static final Codec<Town> CODEC = RecordCodecBuilder.create(townInstance -> townInstance.group(
-			Codec.unboundedMap(UUIDUtil.STRING_CODEC, Member.CODEC).fieldOf("members").forGetter(Town::getMembers),
+			Codec.unboundedMap(UUIDUtil.STRING_CODEC, Member.CODEC).fieldOf("members").forGetter(Town::viewMembers),
 			Codec.STRING.fieldOf("name").forGetter(Town::getName),
 			Codec.STRING.fieldOf("display_name").forGetter(Town::getDisplayName),
 			Codec.INT.fieldOf("gold").forGetter(Town::getGold)
@@ -33,8 +33,8 @@ public class Town {
 		this.gold = gold;
 	}
 
-	public Map<UUID, Member> getMembers() {
-		return Map.copyOf(members);
+	public Map<UUID, Member> viewMembers() {
+		return Collections.unmodifiableMap(members);
 	}
 
 	public Member getMember(EntityReference<Player> player) {
