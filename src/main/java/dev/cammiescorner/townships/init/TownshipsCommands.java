@@ -7,11 +7,12 @@ import dev.cammiescorner.townships.command.TownCommand;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.util.Util;
 
 public class TownshipsCommands {
 	public static void init(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection environment) {
-		LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal(Townships.MOD_ID);
-
-		TownCommand.register(root);
+		dispatcher.register(Util.make(Commands.literal(Townships.MOD_ID), root -> {
+			TownCommand.register(root);
+		}));
 	}
 }
