@@ -10,6 +10,7 @@ import dev.cammiescorner.townships.util.Member;
 import dev.cammiescorner.townships.util.Town;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.level.ChunkPos;
@@ -37,6 +38,8 @@ public class TownCommand {
 		level.getComponent(TownshipsComponents.CLAIMS_COMPONENT).addChunk(uuid, ChunkPos.containing(player.getOnPos()));
 		level.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT).addTown(uuid, town);
 
+		player.sendSystemMessage(Component.literal(String.format("Created town %s", town.getDisplayName())));
+
 		return Command.SINGLE_SUCCESS;
 	}
 
@@ -55,10 +58,14 @@ public class TownCommand {
 				if(chunkPos.contains(town.getHomePos()))
 					return 0;
 
-				if(!claimComponent.getChunks(uuid).contains(chunkPos))
+				if(!claimComponent.getChunks(uuid).contains(chunkPos)) {
 					claimComponent.addChunk(uuid, chunkPos);
-				else
+					player.sendSystemMessage(Component.literal(String.format("Claimed chunk %s", chunkPos)));
+				}
+				else {
 					claimComponent.removeChunk(uuid, chunkPos);
+					player.sendSystemMessage(Component.literal(String.format("Unclaimed chunk %s", chunkPos)));
+				}
 
 				break;
 			}
