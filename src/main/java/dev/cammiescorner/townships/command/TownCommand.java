@@ -23,20 +23,30 @@ public class TownCommand {
 		builder.then(Commands.literal("create")
 				.then(Commands.argument("name", StringArgumentType.word())
 						.executes(ctx -> createTown(ctx, ctx.getSource().getPlayerOrException()))
-				))
-		.then(Commands.literal("claim")
+				)
+		).then(Commands.literal("claim")
 				.executes(ctx -> claimChunk(ctx, ctx.getSource().getPlayerOrException()))
+		).then(Commands.literal("unclaim")
+				.executes(ctx -> unclaimChunk(ctx, ctx.getSource().getPlayerOrException()))
 		);
 	}
 
 	public static int createTown(CommandContext<CommandSourceStack> context, ServerPlayer player) throws CommandSyntaxException {
-		var town = new Town(Map.of(player.getUUID(), new Member(player, Member.Rank.MAYOR)), context.getInput(), 0);
-		var uuid = UUID.randomUUID();
 		var level = player.level();
+		var townComponent = level.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT);
+		var claimComponent = level.getComponent(TownshipsComponents.CLAIMS_COMPONENT);
+
+		if(townComponent.viewTowns().entrySet().stream().anyMatch(entry -> entry.getValue().viewMembers().containsKey(player.getUUID()))) {
+			player.sendSystemMessage(Component.literal("You're already part of a town!"));
+			return 0;
+		}
+
+		var town = new Town(Map.of(player.getUUID(), new Member(player, Member.Rank.MAYOR)), context.getArgument("name", String.class), 0);
+		var uuid = UUID.randomUUID();
 
 		town.setHome(level.dimension(), player.getOnPos());
-		level.getComponent(TownshipsComponents.CLAIMS_COMPONENT).addChunk(uuid, ChunkPos.containing(player.getOnPos()));
-		level.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT).addTown(uuid, town);
+		claimComponent.addChunk(uuid, ChunkPos.containing(player.getOnPos()));
+		townComponent.addTown(uuid, town);
 
 		player.sendSystemMessage(Component.literal(String.format("Created town %s", town.getDisplayName())));
 
@@ -51,6 +61,34 @@ public class TownCommand {
 		for(Map.Entry<UUID, Town> entry : townComponent.viewTowns().entrySet()) {
 			var uuid = entry.getKey();
 			var town = entry.getValue();
+			var member = town.getMember(EntityReference.of(player));
+
+			if(member != null && member.getRank().canClaim()) {
+				var chunkPos = ChunkPos.containing(player.getOnPos());
+
+				if(!claimComponent.getChunks(uuid).contains(chunkPos)) {
+					claimComponent.addChunk(uuid, chunkPos);
+					player.sendSystemMessage(Component.literal(String.format("Claimed chunk %s", chunkPos)));
+					break;
+				}
+				else {
+					player.sendSystemMessage(Component.literal(String.format("Chunk %s is already claimed!", chunkPos)));
+					return 0;
+				}
+			}
+		}
+
+		return Command.SINGLE_SUCCESS;
+	}
+
+	public static int unclaimChunk(CommandContext<CommandSourceStack> context, ServerPlayer player) throws CommandSyntaxException {
+		var level = player.level();
+		var townComponent = level.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT);
+		var claimComponent = level.getComponent(TownshipsComponents.CLAIMS_COMPONENT);
+
+		for(Map.Entry<UUID, Town> entry : townComponent.viewTowns().entrySet()) {
+			var uuid = entry.getKey();
+			var town = entry.getValue();
 
 			if(town.getMember(EntityReference.of(player)).getRank().canClaim()) {
 				var chunkPos = ChunkPos.containing(player.getOnPos());
@@ -58,13 +96,13 @@ public class TownCommand {
 				if(chunkPos.contains(town.getHomePos()))
 					return 0;
 
-				if(!claimComponent.getChunks(uuid).contains(chunkPos)) {
-					claimComponent.addChunk(uuid, chunkPos);
-					player.sendSystemMessage(Component.literal(String.format("Claimed chunk %s", chunkPos)));
-				}
-				else {
+				if(claimComponent.getChunks(uuid).contains(chunkPos)) {
 					claimComponent.removeChunk(uuid, chunkPos);
 					player.sendSystemMessage(Component.literal(String.format("Unclaimed chunk %s", chunkPos)));
+				}
+				else {
+					player.sendSystemMessage(Component.literal(String.format("Chunk %s is already unclaimed!", chunkPos)));
+					return 0;
 				}
 
 				break;
