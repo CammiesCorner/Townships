@@ -25,9 +25,9 @@ public class Townships implements ModInitializer {
 			var oldTown = claimData.getTownAt(oldChunk).orElse(null);
 			var currentTown = claimData.getTownAt(newChunk).orElse(null);
 
-			if(currentTown == null)
+			if(currentTown == null && oldTown != null)
 				player.sendOverlayMessage(TownMessages.ENTER_AREA_WILDERNESS);
-			else if(newChunk.contains(currentTown.homePos().pos()))
+			else if(currentTown != null && newChunk.contains(currentTown.homePos().pos()))
 				player.sendOverlayMessage(TownMessages.enterArea_townHome(currentTown));
 			else if(oldTown != currentTown)
 				player.sendOverlayMessage(TownMessages.enterArea_town(currentTown));
