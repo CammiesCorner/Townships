@@ -19,11 +19,14 @@ import java.util.UUID;
  * error messages are denoted with _E
  */
 public class TownMessages {
-
     public static final Component ENTER_AREA_WILDERNESS = message("claim.area.wilderness", "Wilderness").withStyle(ChatFormatting.GREEN);
 
     public static Component enterArea_town(Town town) {
         return message("claim.area.town", town.displayName(), town.displayName()).withStyle(ChatFormatting.GOLD);
+    }
+
+    public static Component enterArea_townHome(Town town) {
+        return message("claim.area.town_home", town.displayName() + " (Home)", town.displayName()).withStyle(ChatFormatting.GOLD);
     }
 
     public static MutableComponent message(String key, String fallback) {

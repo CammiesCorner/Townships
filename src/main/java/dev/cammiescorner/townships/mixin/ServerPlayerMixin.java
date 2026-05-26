@@ -6,7 +6,6 @@ import dev.cammiescorner.townships.api.inject.ServerPlayerExt;
 import dev.cammiescorner.townships.component.scoreboard.TownsComponent;
 import dev.cammiescorner.townships.util.Member;
 import dev.cammiescorner.townships.util.Town;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -14,6 +13,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -22,19 +22,23 @@ import java.util.Optional;
 
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayerMixin extends Player implements ServerPlayerExt {
-	@Shadow
-	public abstract ServerLevel level();
+	@Shadow public abstract ServerLevel level();
+	@Unique private ChunkPos oldChunkPos = chunkPosition();
 
 	public ServerPlayerMixin(Level level, GameProfile gameProfile) { super(level, gameProfile); }
 
 	@Inject(method = "tick", at = @At("HEAD"))
-	private void tick(CallbackInfo info) {
-		var oldChunkPos = ChunkPos.containing(BlockPos.containing(oldPosition()));
+	private void tickStart(CallbackInfo info) {
 		var newChunkPos = chunkPosition();
 
 		if(!oldChunkPos.equals(newChunkPos)) {
 			ServerPlayerChunkEvents.ON_CHUNKPOS_CHANGE.invoker().onChunkChange((ServerPlayer)(Object) this, oldChunkPos, newChunkPos);
 		}
+	}
+
+	@Inject(method = "tick", at = @At("TAIL"))
+	private void tickEnd(CallbackInfo info) {
+		oldChunkPos = chunkPosition();
 	}
 
 	@Override

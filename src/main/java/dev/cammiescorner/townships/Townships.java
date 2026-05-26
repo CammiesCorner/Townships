@@ -30,6 +30,8 @@ public class Townships implements ModInitializer {
 				else
 					player.sendOverlayMessage(TownMessages.enterArea_town(currentTown));
 			}
+			else if(newChunk.contains(currentTown.homePos().pos()))
+				player.sendOverlayMessage(TownMessages.enterArea_townHome(currentTown));
 		});
 	}
 
