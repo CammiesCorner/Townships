@@ -19,19 +19,18 @@ public class Townships implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		CommandRegistrationCallback.EVENT.register(TownshipsCommands::init);
+
 		ServerPlayerChunkEvents.ON_CHUNKPOS_CHANGE.register((player, oldChunk, newChunk) -> {
 			var claimData = ClaimsComponent.get(player.level());
 			var oldTown = claimData.getTownAt(oldChunk).orElse(null);
 			var currentTown = claimData.getTownAt(newChunk).orElse(null);
 
-			if(oldTown != currentTown) {
-				if(currentTown == null)
-					player.sendOverlayMessage(TownMessages.ENTER_AREA_WILDERNESS);
-				else
-					player.sendOverlayMessage(TownMessages.enterArea_town(currentTown));
-			}
+			if(currentTown == null)
+				player.sendOverlayMessage(TownMessages.ENTER_AREA_WILDERNESS);
 			else if(newChunk.contains(currentTown.homePos().pos()))
 				player.sendOverlayMessage(TownMessages.enterArea_townHome(currentTown));
+			else if(oldTown != currentTown)
+				player.sendOverlayMessage(TownMessages.enterArea_town(currentTown));
 		});
 	}
 
