@@ -10,11 +10,11 @@ import net.minecraft.util.Util;
 
 public class TownshipsCommands {
 	public static void init(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection environment) {
-		dispatcher.register(Util.make(Commands.literal(Townships.MOD_ID), root -> {
+		var rootCommand = dispatcher.register(Util.make(Commands.literal(Townships.MOD_ID), root -> {
 			TownCommand.register(root);
 		}));
-		dispatcher.register(Util.make(Commands.literal("t"), root -> {
-			TownCommand.register(root);
-		}));
+
+		// register aliases
+		dispatcher.register(Commands.literal("t").redirect(rootCommand.getChild("town")));
 	}
 }

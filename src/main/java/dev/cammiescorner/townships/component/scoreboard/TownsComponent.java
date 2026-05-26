@@ -1,18 +1,18 @@
 package dev.cammiescorner.townships.component.scoreboard;
 
-import dev.cammiescorner.townships.Townships;
+import dev.cammiescorner.townships.init.TownshipsComponents;
 import dev.cammiescorner.townships.util.Town;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityReference;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.scores.Scoreboard;
 import org.ladysnake.cca.api.v8.component.CardinalComponent;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class TownsComponent implements CardinalComponent {
 	private final Map<UUID, Town> towns = new HashMap<>();
@@ -47,25 +47,31 @@ public class TownsComponent implements CardinalComponent {
 		});
 	}
 
-	public Map<UUID, Town> viewTowns() {
+	public Map<UUID, Town> towns() {
 		return Collections.unmodifiableMap(towns);
 	}
 
-	public Town getTown(UUID uuid) {
-		if(!towns.containsKey(uuid)) {
-			Townships.LOGGER.error("Town ID [{}] doesn't exist", uuid);
-
-			return null;
-		}
-
-		return towns.get(uuid);
+	public Optional<Town> getTown(UUID uuid) {
+		return Optional.ofNullable(towns.get(uuid));
 	}
 
-	public void addTown(UUID uuid, Town town) {
-		towns.put(uuid, town);
+	public Optional<Town> townFor(EntityReference<Player> reference) {
+		return towns.values().stream().filter(it -> it.members().containsKey(reference.getUUID())).findFirst();
+	}
+
+	public void addTown(Town town) {
+		towns.put(town.id(), town);
 	}
 
 	public void removeTown(UUID uuid) {
 		towns.remove(uuid);
+	}
+
+	public static TownsComponent get(ServerLevel level) {
+		return level.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT);
+	}
+
+	public static TownsComponent get(MinecraftServer server) {
+		return server.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT);
 	}
 }

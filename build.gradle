@@ -34,6 +34,10 @@ dependencies {
 	implementation include("org.ladysnake.cardinal-components-api:cardinal-components-scoreboard:${project.cca_version}")
 }
 
+loom {
+	accessWidenerPath = file("src/main/resources/townships.classtweaker")
+}
+
 processResources {
 	def version = project.version
 	inputs.property "version", version

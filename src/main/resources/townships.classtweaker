@@ -1,0 +1,3 @@
+classTweaker v1 official
+
+transitive-inject-interface net/minecraft/server/level/ServerPlayer dev/cammiescorner/townships/api/inject/ServerPlayerExt
