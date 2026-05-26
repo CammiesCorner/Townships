@@ -1,6 +1,9 @@
 package dev.cammiescorner.townships.component.level;
 
+import dev.cammiescorner.townships.init.TownshipsComponents;
+import dev.cammiescorner.townships.util.Town;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
@@ -79,5 +82,17 @@ public class ClaimsComponent implements CardinalComponent {
 		chunks.remove(pos);
 
 		townClaims.replace(uuid, chunks);
+	}
+
+	public Town getTown(ServerLevel level, ChunkPos pos) {
+		var townData = level.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT);
+		Town town = null;
+
+		for(Map.Entry<UUID, List<ChunkPos>> entry : townClaims.entrySet()) {
+			if(entry.getValue().contains(pos))
+				town = townData.getTown(entry.getKey());
+		}
+
+		return town;
 	}
 }

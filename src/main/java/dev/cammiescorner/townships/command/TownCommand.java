@@ -24,6 +24,8 @@ public class TownCommand {
 				.then(Commands.argument("name", StringArgumentType.word())
 						.executes(ctx -> createTown(ctx, ctx.getSource().getPlayerOrException()))
 				)
+		).then(Commands.literal("info")
+				.executes(ctx -> townInfo(ctx, ctx.getSource().getPlayerOrException()))
 		).then(Commands.literal("claim")
 				.executes(ctx -> claimChunk(ctx, ctx.getSource().getPlayerOrException()))
 		).then(Commands.literal("unclaim")
@@ -49,6 +51,27 @@ public class TownCommand {
 		townComponent.addTown(uuid, town);
 
 		player.sendSystemMessage(Component.literal(String.format("Created town %s", town.getDisplayName())));
+
+		return Command.SINGLE_SUCCESS;
+	}
+
+	public static int townInfo(CommandContext<CommandSourceStack> context, ServerPlayer player) throws CommandSyntaxException {
+		var level = player.level();
+		var townComponent = level.getScoreboard().getComponent(TownshipsComponents.TOWNS_COMPONENT);
+		var claimComponent = level.getComponent(TownshipsComponents.CLAIMS_COMPONENT);
+
+		for(Map.Entry<UUID, Town> entry : townComponent.viewTowns().entrySet()) {
+			var town = entry.getValue();
+			var member = town.getMember(EntityReference.of(player));
+
+			if(member != null) {
+				var text = Component.literal("Town: " + town.getDisplayName()).append("\n")
+						.append("Members: " + town.viewMembers().values().stream().map(member1 -> level.getServer().getPlayerList().getPlayer(member1.getPlayer().getUUID()).getName().getString()).toList()).append("\n")
+						.append("Gold: " + town.getGold()).append("\n")
+						.append("Chunks Claimed: " + claimComponent.getChunks(entry.getKey()).size());
+				player.sendSystemMessage(text);
+			}
+		}
 
 		return Command.SINGLE_SUCCESS;
 	}
