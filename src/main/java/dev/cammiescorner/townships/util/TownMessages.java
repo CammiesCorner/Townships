@@ -26,7 +26,7 @@ public class TownMessages {
     }
 
     public static Component enterArea_townHome(Town town) {
-        return message("claim.area.town_home", town.displayName() + " [Home]", town.displayName()).withStyle(ChatFormatting.AQUA);
+        return message("claim.area.town_home", town.displayName() + " §f[Home]", town.displayName()).withStyle(ChatFormatting.AQUA);
     }
 
     public static MutableComponent message(String key, String fallback) {

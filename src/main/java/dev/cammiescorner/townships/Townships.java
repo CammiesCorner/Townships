@@ -14,8 +14,6 @@ import org.slf4j.LoggerFactory;
 public class Townships implements ModInitializer {
 	public static final String MOD_ID = "townships";
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
 	@Override
 	public void onInitialize() {
 		CommandRegistrationCallback.EVENT.register(TownshipsCommands::init);
@@ -27,7 +25,7 @@ public class Townships implements ModInitializer {
 
 			if(currentTown == null && oldTown != null)
 				player.sendOverlayMessage(TownMessages.ENTER_AREA_WILDERNESS);
-			else if(currentTown != null && newChunk.contains(currentTown.homePos().pos()))
+			else if(currentTown != null && newChunk.contains(currentTown.homePos().pos()) && player.level().dimension() == currentTown.homePos().dimension())
 				player.sendOverlayMessage(TownMessages.enterArea_townHome(currentTown));
 			else if(oldTown != currentTown)
 				player.sendOverlayMessage(TownMessages.enterArea_town(currentTown));

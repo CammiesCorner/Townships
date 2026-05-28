@@ -6,6 +6,8 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.UUID;
+
 public class Member {
 	public static final Codec<Member> CODEC = RecordCodecBuilder.create(memberInstance -> memberInstance.group(
 			EntityReference.<Player>codec().fieldOf("player").forGetter(Member::getPlayer),
@@ -22,6 +24,10 @@ public class Member {
 
 	public Member(Player player, Rank rank) {
 		this(EntityReference.of(player), rank);
+	}
+
+	public UUID id() {
+		return getPlayer().getUUID();
 	}
 
 	public EntityReference<Player> getPlayer() {
