@@ -8,8 +8,6 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.resources.Identifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Townships implements ModInitializer {
 	public static final String MOD_ID = "townships";
@@ -24,11 +22,11 @@ public class Townships implements ModInitializer {
 			var currentTown = claimData.getTownAt(newChunk).orElse(null);
 
 			if(currentTown == null && oldTown != null)
-				player.sendOverlayMessage(TownMessages.ENTER_AREA_WILDERNESS);
+				player.sendOverlayMessage(TownMessages.EnterArea.WILDERNESS);
 			else if(currentTown != null && newChunk.contains(currentTown.homePos().pos()) && player.level().dimension() == currentTown.homePos().dimension())
-				player.sendOverlayMessage(TownMessages.enterArea_townHome(currentTown));
+				player.sendOverlayMessage(TownMessages.EnterArea.townHome(currentTown));
 			else if(oldTown != currentTown)
-				player.sendOverlayMessage(TownMessages.enterArea_town(currentTown));
+				player.sendOverlayMessage(TownMessages.EnterArea.town(currentTown));
 		});
 	}
 

@@ -8,10 +8,10 @@ import dev.cammiescorner.townships.api.event.ClaimEvents;
 import dev.cammiescorner.townships.component.level.ClaimsComponent;
 import dev.cammiescorner.townships.util.Member;
 import dev.cammiescorner.townships.util.Town;
+import dev.cammiescorner.townships.util.TownMessages;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ChunkPos;
 import org.jspecify.annotations.Nullable;
 
@@ -40,16 +40,18 @@ public class ClaimCommand {
         var claimComponent = ClaimsComponent.get(level);
 
         if(town == null || member == null) {
-            // TODO move to messages
-            context.getSource().sendFailure(Component.literal("You must first create a town!"));
+            context.getSource().sendFailure(TownMessages.Towns.Error.NOT_IN_TOWN);
             return 0;
         }
 
         var existingClaim = claimComponent.getTownAt(chunkPos).orElse(null);
         if(existingClaim != null) {
-            // TODO move to messages
-            context.getSource().sendFailure(Component.literal("Chunk %s/%s is already claimed by %s!".formatted(chunkPos.x(), chunkPos.z(), existingClaim.displayName())));
+            context.getSource().sendFailure(TownMessages.Towns.Claim.Error.ownedByOtherTown(chunkPos, existingClaim));
             return 0;
+        }
+
+        if(!member.getRank().canClaim()) {
+            context.getSource().sendFailure(TownMessages.Towns.Claim.Error.missingPermission(member.getRank()));
         }
 
         var errorMsg = ClaimEvents.TRY_CLAIM_CHUNK.invoker().allowAction(town, member, level, chunkPos);
@@ -60,8 +62,7 @@ public class ClaimCommand {
 
         claimComponent.addChunk(town.id(), chunkPos);
 
-        // TODO move to messages
-        context.getSource().sendSuccess(() -> Component.literal("Claimed chunk %s/%s".formatted(chunkPos.x(), chunkPos.z())), false);
+        context.getSource().sendSuccess(() -> TownMessages.Towns.Claim.success(chunkPos), false);
         ClaimEvents.CLAIMED_CHUNK.invoker().onClaimAction(town, member, level, chunkPos);
         return Command.SINGLE_SUCCESS;
     }
@@ -72,27 +73,23 @@ public class ClaimCommand {
         var claimComponent = ClaimsComponent.get(level);
 
         if(member == null || town == null) {
-            // TODO move to messages
-            context.getSource().sendFailure(Component.literal("You must first create a town!"));
+            context.getSource().sendFailure(TownMessages.Towns.Error.NOT_IN_TOWN);
             return 0;
         }
 
         var townAtLocation = claimComponent.getTownAt(chunkPos).orElse(null);
         if(townAtLocation == null) {
-            // TODO move to messages
-            context.getSource().sendFailure(Component.literal(String.format("Chunk %s is not claimed by anybody!", chunkPos)));
+            context.getSource().sendFailure(TownMessages.Towns.Unclaim.Error.notClaimed(chunkPos));
             return 0;
         }
 
         if(!townAtLocation.members().containsKey(member.id())) {
-            // TODO move to messages
-            context.getSource().sendFailure(Component.literal("This chunk belongs to %s, but you are not a member of that town. you cannot unclaim it!".formatted(townAtLocation.displayName())));
+            context.getSource().sendFailure(TownMessages.Towns.Unclaim.Error.claimedByOtherTown(chunkPos, townAtLocation));
             return 0;
         }
 
         if(!member.getRank().canClaim()) {
-            // TODO move to messages
-            context.getSource().sendFailure(Component.literal("Your current rank does not allow you to unclaim territory!"));
+            context.getSource().sendFailure(TownMessages.Towns.Unclaim.Error.missingPermission(member.getRank()));
             return 0;
         }
 
@@ -104,8 +101,7 @@ public class ClaimCommand {
 
         claimComponent.removeChunk(town.id(), chunkPos);
 
-        // TODO move to messages
-        context.getSource().sendSuccess(() -> Component.literal("Unclaimed chunk %s/%s".formatted(chunkPos.x(), chunkPos.z())), false);
+        context.getSource().sendSuccess(() -> TownMessages.Towns.Unclaim.success(chunkPos), false);
         ClaimEvents.UNCLAIMED_CHUNK.invoker().onClaimAction(town, member, level, chunkPos);
         return Command.SINGLE_SUCCESS;
     }

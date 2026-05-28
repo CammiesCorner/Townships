@@ -48,7 +48,7 @@ public class TownCommand {
 
 		var existingTown = player.townships$getTown().orElse(null);
 		if(existingTown != null) {
-			player.sendSystemMessage(TownMessages.createTown_E_inTown(existingTown));
+			player.sendSystemMessage(TownMessages.Towns.Create.Error.alreadyInTown(existingTown));
 			return 0;
 		}
 
@@ -56,7 +56,7 @@ public class TownCommand {
 		townComponent.addTown(town);
 		claimComponent.addChunk(town.id(), ChunkPos.containing(player.getOnPos()));
 
-		player.sendSystemMessage(TownMessages.createTown_success(town));
+		player.sendSystemMessage(TownMessages.Towns.Create.success(town));
 
 		return Command.SINGLE_SUCCESS;
 	}
@@ -66,8 +66,12 @@ public class TownCommand {
 		var claimComponent = ClaimsComponent.get(level);
 
 		var town = player.townships$getTown().orElse(null);
+		if(town == null) {
+			context.getSource().sendFailure(TownMessages.Towns.Error.NOT_IN_TOWN);
+		}
+
 		if(town != null) {
-			player.sendSystemMessage(TownMessages.townInfo(town, claimComponent));
+			player.sendSystemMessage(TownMessages.Towns.Info.listStats(town, claimComponent));
 
 			return Command.SINGLE_SUCCESS;
 		}
